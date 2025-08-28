@@ -16,28 +16,28 @@ export default function Sidebar() {
             Dashboard
           </Link>
           <Link
-            href="/learn/basics"
+            href="/expenses"
             className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
           >
-            Financial Basics
+            All Expenses
           </Link>
           <Link
-            href="/invest/simulator"
+            href="/expenses/add"
             className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
           >
-            Investment Simulator
+            Add Expense
           </Link>
           <Link
-            href="/goals"
+            href="/expenses/analytics"
             className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
           >
-            Financial Goals
+            Analytics
           </Link>
           <Link
-            href="/resources"
+            href="/bills"
             className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
           >
-            Resources
+            Bills
           </Link>
         </nav>
 
