@@ -6,12 +6,16 @@ export interface IBill extends Document {
   amount: number;
   dueDate: Date;
   category: string;
-  status: 'upcoming' | 'paid' | 'overdue';
+  status: 'pending' | 'paid' | 'overdue';
   description?: string;
   isRecurring: boolean;
   recurringPeriod?: 'monthly' | 'quarterly' | 'yearly';
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface IBillModel {
+  updateOverdueBills(): Promise<unknown>;
 }
 
 const BillSchema: Schema = new Schema({
@@ -41,8 +45,8 @@ const BillSchema: Schema = new Schema({
   },
   status: {
     type: String,
-    enum: ['upcoming', 'paid', 'overdue'],
-    default: 'upcoming',
+    enum: ['pending', 'paid', 'overdue'],
+    default: 'pending',
   },
   description: {
     type: String,
@@ -63,5 +67,28 @@ const BillSchema: Schema = new Schema({
 // Create indexes for better query performance
 BillSchema.index({ userId: 1, dueDate: 1 });
 BillSchema.index({ userId: 1, status: 1 });
+BillSchema.index({ userId: 1, dueDate: 1, status: 1 });
+
+// Pre-save middleware to update status based on due date
+BillSchema.pre('save', function(next) {
+  if (this.status === 'pending' && this.dueDate < new Date()) {
+    this.status = 'overdue';
+  }
+  next();
+});
+
+// Static method to update overdue bills
+BillSchema.statics.updateOverdueBills = async function() {
+  const currentDate = new Date();
+  return this.updateMany(
+    {
+      status: 'pending',
+      dueDate: { $lt: currentDate }
+    },
+    {
+      $set: { status: 'overdue' }
+    }
+  );
+};
 
 export default mongoose.models.Bill || mongoose.model<IBill>('Bill', BillSchema);

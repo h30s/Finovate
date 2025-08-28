@@ -6,7 +6,7 @@ import Expense from '@/models/Expense';
 import mongoose from 'mongoose';
 
 interface RouteParams {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
 // GET /api/expenses/[id] - Get single expense
@@ -14,6 +14,7 @@ export async function GET(
   request: NextRequest,
   { params }: RouteParams
 ) {
+  const { id } = await params;
   try {
     const session = await getServerSession(authOptions);
     
@@ -23,12 +24,12 @@ export async function GET(
 
     await dbConnect();
 
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid expense ID' }, { status: 400 });
     }
 
     const expense = await Expense.findOne({
-      _id: params.id,
+      _id: id,
       userId: session.user.id
     }).lean();
 
@@ -51,6 +52,7 @@ export async function PUT(
   request: NextRequest,
   { params }: RouteParams
 ) {
+  const { id } = await params;
   try {
     const session = await getServerSession(authOptions);
     
@@ -60,7 +62,7 @@ export async function PUT(
 
     await dbConnect();
 
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid expense ID' }, { status: 400 });
     }
 
@@ -84,7 +86,7 @@ export async function PUT(
     }
 
     const expense = await Expense.findOneAndUpdate(
-      { _id: params.id, userId: session.user.id },
+      { _id: id, userId: session.user.id },
       {
         category,
         amount: parseFloat(amount),
@@ -113,6 +115,7 @@ export async function DELETE(
   request: NextRequest,
   { params }: RouteParams
 ) {
+  const { id } = await params;
   try {
     const session = await getServerSession(authOptions);
     
@@ -122,12 +125,12 @@ export async function DELETE(
 
     await dbConnect();
 
-    if (!mongoose.Types.ObjectId.isValid(params.id)) {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid expense ID' }, { status: 400 });
     }
 
     const expense = await Expense.findOneAndDelete({
-      _id: params.id,
+      _id: id,
       userId: session.user.id
     });
 

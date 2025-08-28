@@ -37,7 +37,19 @@ export default function Sidebar() {
             href="/bills"
             className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
           >
-            Bills
+            All Bills
+          </Link>
+          <Link
+            href="/bills/add"
+            className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
+            Add Bill
+          </Link>
+          <Link
+            href="/reports"
+            className="block px-4 py-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+          >
+            Reports & Analytics
           </Link>
         </nav>
 

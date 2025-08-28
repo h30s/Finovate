@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Sidebar from '@/components/Sidebar';
 import OverviewCards from '@/components/dashboard/OverviewCards';
 import ExpensesChart from '@/components/dashboard/ExpensesChart';
+import BillReminder from '@/components/bills/BillReminder';
 
 interface DashboardData {
   totalExpenses: number;
@@ -29,15 +30,32 @@ interface DashboardData {
   };
 }
 
+interface IBill {
+  _id: string;
+  userId: string;
+  title: string;
+  amount: number;
+  dueDate: string;
+  status: 'pending' | 'paid' | 'overdue';
+  category: string;
+  description?: string;
+  isRecurring: boolean;
+  recurringPeriod?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export default function DashboardPage() {
   const { data: session, status } = useSession();
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
+  const [upcomingBills, setUpcomingBills] = useState<IBill[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (session?.user?.id) {
       fetchDashboardData();
+      fetchUpcomingBills();
     }
   }, [session]);
 
@@ -59,6 +77,99 @@ export default function DashboardPage() {
       setLoading(false);
     }
   };
+
+  const fetchUpcomingBills = async () => {
+    try {
+      const response = await fetch('/api/bills/upcoming?days=7&limit=10');
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUpcomingBills(data.bills || []);
+      }
+    } catch (err) {
+      console.error('Error fetching upcoming bills:', err);
+    }
+  };
+
+  const handleMarkBillAsPaid = async (billId: string) => {
+    try {
+      const response = await fetch(`/api/bills/${billId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ status: 'paid' }),
+      });
+
+      if (response.ok) {
+        // Refresh upcoming bills
+        await fetchUpcomingBills();
+      }
+    } catch (err) {
+      console.error('Error marking bill as paid:', err);
+    }
+  };
+
+  if (status === 'loading') {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!session) {
+    redirect('/auth/login?callbackUrl=/dashboard');
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar />
+        <div className="flex-1 lg:ml-64">
+          <div className="p-8">
+            <div className="animate-pulse">
+              <div className="h-8 bg-gray-300 rounded w-1/4 mb-8"></div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="bg-white rounded-xl p-6 h-32">
+                    <div className="h-4 bg-gray-300 rounded w-1/2 mb-4"></div>
+                    <div className="h-8 bg-gray-300 rounded w-3/4 mb-2"></div>
+                    <div className="h-3 bg-gray-300 rounded w-1/3"></div>
+                  </div>
+                ))}
+              </div>
+              <div className="bg-white rounded-xl p-6 h-96">
+                <div className="h-6 bg-gray-300 rounded w-1/3 mb-4"></div>
+                <div className="h-80 bg-gray-300 rounded"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex">
+        <Sidebar />
+        <div className="flex-1 lg:ml-64">
+          <div className="p-8">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-800">Error: {error}</p>
+              <button
+                onClick={fetchDashboardData}
+                className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (status === 'loading') {
     return (
@@ -135,6 +246,16 @@ export default function DashboardPage() {
               Here's an overview of your expenses and financial activity
             </p>
           </div>
+
+          {/* Bill Reminders - Show first for urgent bills */}
+          {upcomingBills.length > 0 && (
+            <div className="mb-8">
+              <BillReminder
+                bills={upcomingBills}
+                onMarkAsPaid={handleMarkBillAsPaid}
+              />
+            </div>
+          )}
 
           {/* Overview Cards */}
           {dashboardData && (

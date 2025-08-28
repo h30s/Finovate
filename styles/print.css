@@ -1,0 +1,197 @@
+/* Print styles for reports */
+@media print {
+  /* Hide elements that shouldn't be printed */
+  .no-print,
+  button,
+  input[type="text"],
+  select,
+  .filter-panel {
+    display: none !important;
+  }
+
+  /* Page setup */
+  @page {
+    margin: 2cm;
+    size: A4;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif !important;
+    font-size: 12pt;
+    line-height: 1.4;
+    color: black !important;
+    background: white !important;
+  }
+
+  /* Headers */
+  h1 {
+    font-size: 24pt;
+    margin-bottom: 10pt;
+    color: black !important;
+  }
+
+  h2 {
+    font-size: 18pt;
+    margin-top: 20pt;
+    margin-bottom: 10pt;
+    color: black !important;
+    page-break-after: avoid;
+  }
+
+  h3 {
+    font-size: 14pt;
+    margin-top: 15pt;
+    margin-bottom: 8pt;
+    color: black !important;
+    page-break-after: avoid;
+  }
+
+  /* Containers */
+  .container {
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Cards and sections */
+  .bg-white,
+  .rounded-xl,
+  .shadow-sm {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    margin-bottom: 15pt;
+    page-break-inside: avoid;
+  }
+
+  /* Grid layouts */
+  .grid {
+    display: block !important;
+  }
+
+  .grid > div {
+    margin-bottom: 15pt;
+    page-break-inside: avoid;
+  }
+
+  /* Charts */
+  .recharts-wrapper {
+    page-break-inside: avoid;
+  }
+
+  /* Tables */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    margin-bottom: 15pt;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    border: 1px solid #ccc !important;
+    padding: 8pt !important;
+    text-align: left !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  th {
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+  }
+
+  /* Summary cards */
+  .summary-card {
+    border: 2px solid #333 !important;
+    padding: 15pt !important;
+    margin-bottom: 15pt;
+    background: white !important;
+    page-break-inside: avoid;
+  }
+
+  /* Text formatting */
+  .text-white,
+  .text-blue-100,
+  .text-green-100 {
+    color: black !important;
+  }
+
+  .bg-gradient-to-r {
+    background: white !important;
+    border: 2px solid #333 !important;
+  }
+
+  /* Status badges */
+  .inline-flex {
+    display: inline !important;
+    border: 1px solid #333 !important;
+    padding: 2pt 6pt !important;
+    font-size: 10pt !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Trend indicators */
+  .text-green-600,
+  .text-red-600,
+  .text-blue-600 {
+    color: black !important;
+    font-weight: bold !important;
+  }
+
+  /* Force page breaks */
+  .print-break {
+    page-break-before: always !important;
+  }
+
+  /* Chart containers */
+  .chart-container {
+    page-break-inside: avoid !important;
+    margin-bottom: 20pt;
+  }
+
+  /* Footer */
+  .report-footer {
+    position: fixed;
+    bottom: 1cm;
+    left: 0;
+    right: 0;
+    text-align: center;
+    font-size: 10pt;
+    color: #666;
+    border-top: 1px solid #ccc;
+    padding-top: 5pt;
+  }
+
+  /* Remove unnecessary spacing */
+  .space-y-8 > * + *,
+  .space-y-6 > * + *,
+  .space-y-4 > * + *,
+  .space-y-3 > * + *,
+  .space-y-2 > * + * {
+    margin-top: 10pt !important;
+  }
+
+  /* Ensure proper text sizing */
+  .text-xs { font-size: 9pt !important; }
+  .text-sm { font-size: 10pt !important; }
+  .text-base { font-size: 12pt !important; }
+  .text-lg { font-size: 14pt !important; }
+  .text-xl { font-size: 16pt !important; }
+  .text-2xl { font-size: 18pt !important; }
+  .text-3xl { font-size: 22pt !important; }
+}
+
+/* Print-specific utilities */
+@media print {
+  .print-only {
+    display: block !important;
+  }
+  
+  .screen-only {
+    display: none !important;
+  }
+}
