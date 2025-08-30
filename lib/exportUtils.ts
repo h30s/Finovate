@@ -27,12 +27,39 @@ export class ExportUtils {
 
       const response = await fetch(`/api/reports/export?${queryParams}`);
       
+      // The server now always returns a CSV file (either with data or sample data)
+      // So we just need to check if the response is OK
       if (!response.ok) {
-        throw new Error('Failed to export CSV');
+        // Try to get error message from response
+        let errorMessage = 'Failed to export CSV';
+        try {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            const errorData = await response.json();
+            errorMessage = errorData.error || errorMessage;
+          }
+        } catch (e) {
+          // If we can't parse the error, use status code
+          if (response.status === 401) {
+            errorMessage = 'You need to be logged in to export data.';
+          } else if (response.status === 400) {
+            errorMessage = 'Invalid export parameters. Please try again.';
+          } else if (response.status === 500) {
+            errorMessage = 'Server error occurred. Please try again later.';
+          } else {
+            errorMessage = `Failed to export CSV (Error ${response.status})`;
+          }
+        }
+        throw new Error(errorMessage);
       }
 
       // Get the CSV content
       const csvContent = await response.text();
+      
+      // Validate that we actually got CSV content
+      if (!csvContent || csvContent.trim().length === 0) {
+        throw new Error('No data available for export');
+      }
       
       // Create blob and download
       const blob = new Blob([csvContent], { type: 'text/csv' });

@@ -89,15 +89,27 @@ const ReportsPage = () => {
 
   const handleExportCSV = async (type: 'expenses' | 'bills') => {
     setExporting(true);
+    setError(null); // Clear any previous errors
     try {
       await ExportUtils.exportToCSV(type, {
         startDate: filters.startDate,
         endDate: filters.endDate,
         categories: filters.categories
       });
+      
+      // Check if we have actual data
+      const hasData = type === 'expenses' 
+        ? reportData.expenses && reportData.expenses.rawData && reportData.expenses.rawData.length > 0
+        : reportData.bills && reportData.bills.rawData && reportData.bills.rawData.length > 0;
+      
+      if (!hasData) {
+        // Inform user that sample data was downloaded
+        setError(`Note: Downloaded a sample CSV template for ${type} as no actual data was found. Add some ${type} to get real data.`);
+      }
     } catch (error) {
       console.error('Export failed:', error);
-      setError('Failed to export CSV');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to export CSV';
+      setError(`CSV Export Error: ${errorMessage}`);
     } finally {
       setExporting(false);
     }

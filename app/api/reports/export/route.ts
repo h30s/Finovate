@@ -23,7 +23,11 @@ export async function GET(request: NextRequest) {
     const format_type = searchParams.get('format') as 'csv' | 'pdf';
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');
-    const categories = searchParams.get('categories')?.split(',') || undefined;
+    // Handle empty categories parameter properly
+    const categoriesParam = searchParams.get('categories');
+    const categories = categoriesParam && categoriesParam.trim() !== '' 
+      ? categoriesParam.split(',').filter(cat => cat.trim() !== '')
+      : undefined;
 
     if (!type || !format_type) {
       return NextResponse.json(
@@ -55,11 +59,48 @@ export async function GET(request: NextRequest) {
     }
 
     if (format_type === 'csv') {
+      // Define headers based on type to ensure consistency
+      let headers: string[];
+      if (type === 'expenses') {
+        headers = ['Date', 'Category', 'Amount', 'Note', 'Created At'];
+      } else {
+        headers = ['Title', 'Amount', 'Due Date', 'Category', 'Status', 'Description', 'Is Recurring', 'Recurring Period', 'Created At'];
+      }
+      
+      // Check if there's data to export
+      if (!data || data.length === 0) {
+        // Generate sample CSV with headers and example data
+        let sampleContent: string;
+        
+        if (type === 'expenses') {
+          sampleContent = headers.join(',') + '\n' +
+            '# No actual data found. Below are example entries to show the format:\n' +
+            `${format(new Date(), 'yyyy-MM-dd')},Food,50.00,Lunch at restaurant,${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}\n` +
+            `${format(new Date(), 'yyyy-MM-dd')},Transportation,20.00,Uber ride,${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}\n` +
+            `${format(new Date(), 'yyyy-MM-dd')},Shopping,150.00,Groceries,${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}`;
+        } else {
+          sampleContent = headers.join(',') + '\n' +
+            '# No actual data found. Below are example entries to show the format:\n' +
+            `Electricity Bill,120.00,${format(new Date(), 'yyyy-MM-dd')},utilities,pending,Monthly electricity bill,Yes,monthly,${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}\n` +
+            `Internet Service,60.00,${format(new Date(), 'yyyy-MM-dd')},utilities,paid,Broadband internet,Yes,monthly,${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}\n` +
+            `Rent Payment,1500.00,${format(new Date(), 'yyyy-MM-dd')},rent,pending,Monthly rent,Yes,monthly,${format(new Date(), 'yyyy-MM-dd HH:mm:ss')}`;
+        }
+        
+        // Always return a CSV file with sample data when no data exists
+        console.log(`No ${type} data found for export. Returning sample CSV template.`);
+        
+        return new Response(sampleContent, {
+          headers: {
+            'Content-Type': 'text/csv',
+            'Content-Disposition': `attachment; filename="${type}_sample_${format(new Date(), 'yyyy-MM-dd')}.csv"`
+          }
+        });
+      }
+
       // Format data for CSV
       const csvData = ReportsService.formatForCSV(data, type);
       
       // Convert to CSV string
-      const headers = Object.keys(csvData[0] || {});
       const csvContent = [
         headers.join(','),
         ...csvData.map(row => 
@@ -69,7 +110,7 @@ export async function GET(request: NextRequest) {
             if (typeof value === 'string' && (value.includes(',') || value.includes('"'))) {
               return `"${value.replace(/"/g, '""')}"`;
             }
-            return value;
+            return value || ''; // Handle undefined/null values
           }).join(',')
         )
       ].join('\n');
