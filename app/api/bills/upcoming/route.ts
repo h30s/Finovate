@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     await dbConnect();
 
     // Update overdue bills first
-    await Bill.updateOverdueBills();
+    await (Bill as any).updateOverdueBills();
 
     const { searchParams } = new URL(request.url);
     const days = parseInt(searchParams.get('days') || '7'); // Default to 7 days

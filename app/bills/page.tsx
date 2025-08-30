@@ -28,6 +28,7 @@ interface BillsResponse {
       totalAmount: number;
     };
   };
+  error?: string; // For error responses
 }
 
 export default function BillsPage() {
@@ -326,7 +327,7 @@ export default function BillsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
                 {bills.map((bill) => (
                   <BillCard
-                    key={bill._id}
+                    key={String(bill._id)}
                     bill={bill}
                     onStatusToggle={handleStatusToggle}
                     onDelete={handleDeleteBill}

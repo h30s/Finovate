@@ -72,7 +72,7 @@ export default function BillReminder({ bills, onMarkAsPaid }: BillReminderProps)
             <div className="space-y-2">
               {overdueBills.slice(0, 3).map((bill) => (
                 <div
-                  key={bill._id}
+                  key={String(bill._id)}
                   className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200"
                 >
                   <div className="flex-1">
@@ -84,7 +84,7 @@ export default function BillReminder({ bills, onMarkAsPaid }: BillReminderProps)
                   {onMarkAsPaid && (
                     <Button
                       size="sm"
-                      onClick={() => onMarkAsPaid(bill._id)}
+                      onClick={() => onMarkAsPaid(String(bill._id))}
                       className="bg-red-600 hover:bg-red-700"
                     >
                       Pay Now
@@ -116,7 +116,7 @@ export default function BillReminder({ bills, onMarkAsPaid }: BillReminderProps)
                 
                 return (
                   <div
-                    key={bill._id}
+                    key={String(bill._id)}
                     className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200"
                   >
                     <div className="flex-1">
@@ -129,7 +129,7 @@ export default function BillReminder({ bills, onMarkAsPaid }: BillReminderProps)
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => onMarkAsPaid(bill._id)}
+                        onClick={() => onMarkAsPaid(String(bill._id))}
                         className="border-orange-300 text-orange-700 hover:bg-orange-100"
                       >
                         Pay Now

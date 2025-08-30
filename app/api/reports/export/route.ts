@@ -84,8 +84,8 @@ export async function GET(request: NextRequest) {
     } else {
       // For PDF, return data for client-side generation
       const processedData = type === 'expenses' 
-        ? ReportsService.processExpensesByCategory(data)
-        : ReportsService.processBillsByCategory(data);
+        ? ReportsService.processExpensesByCategory(data.map(item => ({ category: item.category, amount: item.amount })))
+        : ReportsService.processBillsByCategory(data.map(item => ({ category: item.category, amount: item.amount, status: item.status })));
 
       return NextResponse.json({
         success: true,

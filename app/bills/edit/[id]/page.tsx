@@ -147,7 +147,7 @@ export default function EditBillPage({ params }: EditBillPageProps) {
               <p className="text-red-600 text-sm">{error}</p>
               <Button
                 variant="outline"
-                onClick={fetchBill}
+                onClick={() => fetchBill(billId!)}
                 className="mt-2"
               >
                 Try Again

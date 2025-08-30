@@ -53,6 +53,77 @@ export class ExportUtils {
   }
 
   /**
+   * Simple PDF generation using browser print
+   */
+  static async generateSimplePDF(elementId: string, filename: string) {
+    try {
+      console.log('Using simple PDF generation method...');
+      
+      const element = document.getElementById(elementId);
+      if (!element) {
+        throw new Error(`Element with ID '${elementId}' not found`);
+      }
+
+      // Open print dialog which can save as PDF
+      const printWindow = window.open('', '_blank');
+      if (!printWindow) {
+        throw new Error('Failed to open print window. Please allow pop-ups.');
+      }
+
+      // Clone the element
+      const clonedElement = element.cloneNode(true) as HTMLElement;
+      
+      // Add print-friendly styles
+      const printStyles = `
+        <style>
+          @media print {
+            body { margin: 0; padding: 20px; font-family: Arial, sans-serif; }
+            .no-print { display: none !important; }
+            .print-header { margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+            th { background-color: #f5f5f5; font-weight: bold; }
+          }
+          @page { margin: 1in; }
+        </style>
+      `;
+
+      printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>${filename}</title>
+          <meta charset="utf-8">
+          ${printStyles}
+        </head>
+        <body>
+          <div class="print-header">
+            <h1>Finovate Financial Report</h1>
+            <p>Generated on: ${format(new Date(), 'MMMM dd, yyyy HH:mm')}</p>
+          </div>
+          ${clonedElement.outerHTML}
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+                // Don't auto-close to let user save as PDF
+              }, 500);
+            };
+          </script>
+        </body>
+        </html>
+      `);
+
+      printWindow.document.close();
+      
+      return { success: true };
+    } catch (error) {
+      console.error('Simple PDF generation failed:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Generate PDF from HTML element
    */
   static async generatePDF(
@@ -65,75 +136,164 @@ export class ExportUtils {
     } = {}
   ) {
     try {
+      console.log('Starting PDF generation for element:', elementId);
+      
       const element = document.getElementById(elementId);
       if (!element) {
         throw new Error(`Element with ID '${elementId}' not found`);
       }
 
-      // Temporarily show the element if it's hidden
-      const originalDisplay = element.style.display;
-      element.style.display = 'block';
+      console.log('Element found, preparing for capture...');
+      
+      // Store original styles
+      const originalStyles = {
+        display: element.style.display,
+        visibility: element.style.visibility,
+        position: element.style.position,
+        left: element.style.left,
+        top: element.style.top
+      };
 
-      // Capture the element as canvas
+      // Temporarily make element visible and positioned for capture
+      element.style.display = 'block';
+      element.style.visibility = 'visible';
+      element.style.position = 'relative';
+      element.style.left = 'auto';
+      element.style.top = 'auto';
+
+      // Wait a moment for rendering
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      console.log('Capturing element as canvas...');
+      
+      // Capture the element as canvas with better options
       const canvas = await html2canvas(element, {
-        scale: 2, // Higher quality
+        scale: 1.5, // Good balance between quality and performance
         useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff'
+        allowTaint: false,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: element.scrollWidth,
+        height: element.scrollHeight,
+        windowWidth: window.innerWidth,
+        windowHeight: window.innerHeight,
+        scrollX: 0,
+        scrollY: 0,
+        foreignObjectRendering: true
       });
 
-      // Restore original display
-      element.style.display = originalDisplay;
+      console.log('Canvas created, size:', canvas.width, 'x', canvas.height);
+
+      // Restore original styles
+      Object.assign(element.style, originalStyles);
 
       // Create PDF
       const pdf = new jsPDF({
         orientation: options.orientation || 'portrait',
         unit: 'mm',
-        format: options.format || 'a4'
+        format: options.format || 'a4',
+        compress: true
       });
 
-      // Calculate dimensions to fit the canvas
-      const imgWidth = 210; // A4 width in mm
-      const pageHeight = 295; // A4 height in mm
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      let heightLeft = imgHeight;
+      // Calculate dimensions
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10; // 10mm margin
+      const availableWidth = pdfWidth - (2 * margin);
+      const availableHeight = pdfHeight - (2 * margin);
 
-      let position = 0;
+      // Calculate image dimensions to fit on page
+      const imgAspectRatio = canvas.width / canvas.height;
+      let imgWidth = availableWidth;
+      let imgHeight = imgWidth / imgAspectRatio;
+
+      // If image is too tall, scale it down
+      if (imgHeight > availableHeight) {
+        imgHeight = availableHeight;
+        imgWidth = imgHeight * imgAspectRatio;
+      }
+
+      let yPosition = margin;
 
       // Add title if provided
       if (options.title) {
-        pdf.setFontSize(16);
+        pdf.setFontSize(18);
         pdf.setFont('helvetica', 'bold');
-        pdf.text(options.title, 20, 20);
+        pdf.text(options.title, margin, yPosition + 10);
         
         pdf.setFontSize(10);
         pdf.setFont('helvetica', 'normal');
-        pdf.text(`Generated on: ${format(new Date(), 'MMMM dd, yyyy')}`, 20, 30);
+        pdf.text(`Generated on: ${format(new Date(), 'MMMM dd, yyyy HH:mm')}`, margin, yPosition + 20);
         
-        position = 40;
-        heightLeft -= 40;
+        yPosition += 30;
       }
 
-      // Add the captured image
-      const imgData = canvas.toDataURL('image/png');
-      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      // Add new pages if content is longer than one page
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+      console.log('Adding image to PDF...');
+      
+      // Convert canvas to image and add to PDF
+      const imgData = canvas.toDataURL('image/jpeg', 0.85); // Use JPEG with compression
+      
+      // Calculate how many pages we need
+      const totalHeight = canvas.height * (imgWidth / canvas.width);
+      const pageContentHeight = pdfHeight - yPosition - margin;
+      
+      if (totalHeight <= pageContentHeight) {
+        // Fits on one page
+        pdf.addImage(imgData, 'JPEG', margin, yPosition, imgWidth, imgHeight);
+      } else {
+        // Multiple pages needed
+        let sourceY = 0;
+        const sourceHeight = canvas.height * (pageContentHeight / totalHeight);
+        
+        while (sourceY < canvas.height) {
+          // Create a temporary canvas for this page
+          const tempCanvas = document.createElement('canvas');
+          const tempCtx = tempCanvas.getContext('2d');
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = Math.min(sourceHeight, canvas.height - sourceY);
+          
+          tempCtx?.drawImage(
+            canvas,
+            0, sourceY, canvas.width, tempCanvas.height,
+            0, 0, canvas.width, tempCanvas.height
+          );
+          
+          const pageImgData = tempCanvas.toDataURL('image/jpeg', 0.85);
+          const pageImgHeight = (tempCanvas.height * imgWidth) / tempCanvas.width;
+          
+          pdf.addImage(pageImgData, 'JPEG', margin, yPosition, imgWidth, pageImgHeight);
+          
+          sourceY += tempCanvas.height;
+          
+          if (sourceY < canvas.height) {
+            pdf.addPage();
+            yPosition = margin;
+          }
+        }
       }
 
+      console.log('Saving PDF...');
+      
       // Save the PDF
       pdf.save(filename);
+      
+      console.log('PDF saved successfully');
 
       return { success: true };
     } catch (error) {
       console.error('Error generating PDF:', error);
-      throw error;
+      // Provide more specific error messages
+      let errorMessage = 'Failed to generate PDF';
+      if (error instanceof Error) {
+        if (error.message.includes('not found')) {
+          errorMessage = 'Could not find the reports content to export';
+        } else if (error.message.includes('canvas')) {
+          errorMessage = 'Failed to capture the page content';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      throw new Error(errorMessage);
     }
   }
 

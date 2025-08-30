@@ -155,7 +155,7 @@ export class ReportsService {
     const monthTotals = new Array(12).fill(0);
     
     data.forEach(item => {
-      const date = new Date(item.date || item.dueDate);
+      const date = new Date(item.date || item.dueDate || new Date());
       const month = date.getMonth();
       monthTotals[month] += item.amount;
     });
@@ -190,23 +190,23 @@ export class ReportsService {
   static formatForCSV(data: Array<Record<string, unknown>>, type: 'expenses' | 'bills'): Array<Record<string, unknown>> {
     if (type === 'expenses') {
       return data.map(item => ({
-        Date: format(new Date(item.date), 'yyyy-MM-dd'),
+        Date: format(new Date(item.date as string), 'yyyy-MM-dd'),
         Category: item.category,
         Amount: item.amount,
         Note: item.note || '',
-        'Created At': format(new Date(item.createdAt), 'yyyy-MM-dd HH:mm:ss')
+        'Created At': format(new Date(item.createdAt as string), 'yyyy-MM-dd HH:mm:ss')
       }));
     } else {
       return data.map(item => ({
         Title: item.title,
         Amount: item.amount,
-        'Due Date': format(new Date(item.dueDate), 'yyyy-MM-dd'),
+        'Due Date': format(new Date(item.dueDate as string), 'yyyy-MM-dd'),
         Category: item.category,
         Status: item.status,
         Description: item.description || '',
         'Is Recurring': item.isRecurring ? 'Yes' : 'No',
         'Recurring Period': item.recurringPeriod || '',
-        'Created At': format(new Date(item.createdAt), 'yyyy-MM-dd HH:mm:ss')
+        'Created At': format(new Date(item.createdAt as string), 'yyyy-MM-dd HH:mm:ss')
       }));
     }
   }

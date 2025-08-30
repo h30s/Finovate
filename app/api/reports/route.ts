@@ -68,8 +68,13 @@ export async function GET(request: NextRequest) {
       const previousExpenses = await Expense.find(previousExpenseFilter).lean();
 
       // Process expense data
-      const expensesByCategory = ReportsService.processExpensesByCategory(currentExpenses);
-      const monthlyComparison = ReportsService.generateMonthlyComparison(currentExpenses, previousExpenses);
+      const expensesByCategory = ReportsService.processExpensesByCategory(
+        currentExpenses.map(item => ({ category: item.category, amount: item.amount }))
+      );
+      const monthlyComparison = ReportsService.generateMonthlyComparison(
+        currentExpenses.map(item => ({ date: item.date, amount: item.amount })),
+        previousExpenses.map(item => ({ date: item.date, amount: item.amount }))
+      );
       
       // Calculate totals and trends
       const currentTotal = currentExpenses.reduce((sum, exp) => sum + exp.amount, 0);
@@ -118,8 +123,13 @@ export async function GET(request: NextRequest) {
       const previousBills = await Bill.find(previousBillFilter).lean();
 
       // Process bill data
-      const billsByCategory = ReportsService.processBillsByCategory(currentBills);
-      const monthlyBillComparison = ReportsService.generateMonthlyComparison(currentBills, previousBills);
+      const billsByCategory = ReportsService.processBillsByCategory(
+        currentBills.map(item => ({ category: item.category, amount: item.amount, status: item.status }))
+      );
+      const monthlyBillComparison = ReportsService.generateMonthlyComparison(
+        currentBills.map(item => ({ dueDate: item.dueDate, amount: item.amount })),
+        previousBills.map(item => ({ dueDate: item.dueDate, amount: item.amount }))
+      );
       
       // Calculate totals and trends
       const currentBillTotal = currentBills.reduce((sum, bill) => sum + bill.amount, 0);

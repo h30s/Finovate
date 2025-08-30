@@ -105,18 +105,47 @@ const ReportsPage = () => {
 
   const handleExportPDF = async () => {
     setExporting(true);
+    setError(null); // Clear any previous errors
+    
     try {
-      await ExportUtils.generatePDF(
-        'reports-container',
-        `financial_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`,
-        {
-          title: 'Financial Reports',
-          orientation: 'portrait'
-        }
-      );
+      // Check if reports container exists and has content
+      const reportsContainer = document.getElementById('reports-container');
+      if (!reportsContainer) {
+        throw new Error('Reports container not found');
+      }
+      
+      // Check if there's any data to export
+      if (!reportData.expenses && !reportData.bills) {
+        throw new Error('No data available to export. Please load some reports first.');
+      }
+      
+      console.log('Starting PDF export...');
+      
+      const filename = `finovate_financial_report_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+      
+      try {
+        // Try advanced PDF generation first
+        await ExportUtils.generatePDF(
+          'reports-container',
+          filename,
+          {
+            title: 'Finovate Financial Report',
+            orientation: 'portrait'
+          }
+        );
+        console.log('Advanced PDF export completed successfully');
+      } catch (advancedError) {
+        console.log('Advanced PDF failed, trying simple method:', advancedError);
+        
+        // Fallback to simple print-based PDF generation
+        await ExportUtils.generateSimplePDF('reports-container', filename);
+        console.log('Simple PDF export completed successfully');
+      }
+      
     } catch (error) {
       console.error('PDF export failed:', error);
-      setError('Failed to export PDF');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to export PDF';
+      setError(`PDF Export Error: ${errorMessage}. Try using the Print button as an alternative.`);
     } finally {
       setExporting(false);
     }
@@ -242,8 +271,17 @@ const ReportsPage = () => {
                 disabled={exporting}
                 className="flex items-center gap-2 px-4 py-2 text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors disabled:opacity-50"
               >
-                <FileText className="w-4 h-4" />
-                PDF
+                {exporting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-2 border-purple-600 border-t-transparent" />
+                    Generating PDF...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-4 h-4" />
+                    PDF
+                  </>
+                )}
               </button>
               
               <button

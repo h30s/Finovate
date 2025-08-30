@@ -47,9 +47,9 @@ export async function GET(request: NextRequest) {
     }
     
     if (startDate || endDate) {
-      filter.dueDate = {};
-      if (startDate) filter.dueDate.$gte = new Date(startDate);
-      if (endDate) filter.dueDate.$lte = new Date(endDate);
+      filter.dueDate = {} as any;
+      if (startDate) (filter.dueDate as any).$gte = new Date(startDate);
+      if (endDate) (filter.dueDate as any).$lte = new Date(endDate);
     }
 
     const [bills, total] = await Promise.all([

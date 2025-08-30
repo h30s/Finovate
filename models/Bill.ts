@@ -71,8 +71,9 @@ BillSchema.index({ userId: 1, dueDate: 1, status: 1 });
 
 // Pre-save middleware to update status based on due date
 BillSchema.pre('save', function(next) {
-  if (this.status === 'pending' && this.dueDate < new Date()) {
-    this.status = 'overdue';
+  const bill = this as unknown as IBill;
+  if (bill.status === 'pending' && bill.dueDate < new Date()) {
+    bill.status = 'overdue';
   }
   next();
 });

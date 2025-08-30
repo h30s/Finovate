@@ -69,7 +69,7 @@ export default function BillCard({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onEdit(bill._id)}
+                    onClick={() => onEdit(String(bill._id))}
                     className="h-8 w-8 p-0"
                   >
                     <Edit className="w-4 h-4" />
@@ -79,7 +79,7 @@ export default function BillCard({
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => onDelete(bill._id)}
+                    onClick={() => onDelete(String(bill._id))}
                     className="h-8 w-8 p-0 text-red-500 hover:text-red-700"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -129,7 +129,7 @@ export default function BillCard({
       {showActions && onStatusToggle && bill.status !== 'paid' && (
         <CardFooter className="pt-0">
           <Button
-            onClick={() => onStatusToggle(bill._id, 'paid')}
+            onClick={() => onStatusToggle(String(bill._id), 'paid')}
             className="w-full"
             variant="default"
           >
@@ -142,7 +142,7 @@ export default function BillCard({
       {showActions && onStatusToggle && bill.status === 'paid' && (
         <CardFooter className="pt-0">
           <Button
-            onClick={() => onStatusToggle(bill._id, 'pending')}
+            onClick={() => onStatusToggle(String(bill._id), 'pending')}
             className="w-full"
             variant="outline"
           >
